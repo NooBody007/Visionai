@@ -1,0 +1,722 @@
+<html lang="en">
+<head>
+    <style>
+        html, body{
+            overflow: hidden;
+            height: 100%;
+        }
+
+        .border-right{
+            border-right: 2px solid #333333;
+        }
+        .border-left{
+            border-left: 2px solid #333333;
+        }
+        
+        .thumbnail-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+
+        .middle-panel {
+            background-color: #8d8d8dcc;
+            text-align: center;
+            padding: 10px;
+        }
+
+        .content-area{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 60px;
+            padding-left: var(--left-sidebar-width,0);
+            padding-right: var(--right-sidebar-widht,0);
+            height: calc(100vh - 60px);
+        }
+        
+        #canvas {
+            width: 100%;
+            height: 100%;
+            background-color: #333333;
+        }
+        
+        .thumbnail-wrapper {
+            cursor: pointer;
+        }
+
+        .thumbnail-wrapper.selected img {
+            border: 2px solid blue;
+            box-shadow: 0 0 5px rgba(0, 0, 255, 0.5);
+        }
+
+        .offcanvas{
+            transition: none !important;
+            visibility: hidden;
+        }
+
+        .offcanvas.show {
+            visibility: visible; /* Show when the .show class is added */
+            transform: none !important; /* Remove the sliding effect */
+        }
+
+        .offcanvas-start,.offcanvas-end{
+            top: 60px;
+            height: calc(100%-60px);
+        }
+        
+        .navbar{
+            position: fixed;
+            top:0;
+            width: 100%;
+            z-index: 1050;
+        }
+
+        .flex-container{
+            max-height: 100%;
+            overflow-y: auto;
+        }
+        
+    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+</head>
+
+
+<body class="bg-light">
+    <nav class="navbar navbar-expand-lg bg-body-tertiary" data-bs-theme="dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">Navbar</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                <button class="btn btn-primary"  type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasScrolling" aria-controls="offcanvasScrolling">Images</button>
+                </li>
+                <input type="file" id="imageUpload" multiple accept="image/*">
+                <li class="nav-item">
+                <a class="nav-link" href="#">Link</a>
+                </li>
+                <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    Dropdown
+                </a>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#">Action</a></li>
+                    <li><a class="dropdown-item" href="#">Another action</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="#">Something else here</a></li>
+                </ul>
+                </li>
+                <li class="nav-item">
+                <a class="nav-link disabled" aria-disabled="true">Disabled</a>
+                </li>
+            </ul>
+           <div id="label-inputs">
+                <input type="text" id="label-name-input" placeholder="Enter label name">
+                <input type="color" id="label-color-input" value="#ff0000">
+                <button id="add-label-button">Add Label</button>
+            </div>
+    
+            <form class="d-flex" role="search">
+                <li class="nav-item">
+                    <button id="export-yolo" class="btn btn-primary">Export Labels (YOLOv4)</button>
+                </li>
+                <button class="btn btn-secondary ms-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasRight" aria-controls="offcanvasRight">Label</button>
+
+            </form>
+            
+
+            </div>
+        </div>
+    </nav>
+
+
+
+    
+    <div class="offcanvas offcanvas-start" data-bs-scroll="true" data-bs-backdrop="false" tabindex="-1" id="offcanvasScrolling" aria-labelledby="offcanvasScrollingLabel" offcanvas-vertical-height="10">
+        <div class="offcanvas-header">
+          <h5 class="offcanvas-title" id="offcanvasScrollingLabel">Offcanvas with body scrolling</h5>
+          <button type="button" class="btn-close" onclick="toggleSidebar('offcanvasScrolling')" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body">
+            <div class="row">
+                <div class="col-6 left-panel">
+                    <div class="flex-container">
+
+                    </div>
+                </div>
+                <div class="col-6 left-panel">
+                    <div class="flex-container">
+
+                    </div>
+                </div>
+            </div>   
+        </div>
+    </div>
+
+
+
+    <div class="content-area" draggable="false">
+        <canvas id="canvas"></canvas>
+    </div>
+
+
+
+<!--
+    <div class="col-8 middle-panel">
+        <div class="toolbar">
+            div
+        </div>
+        <canvas id="canvas" width="1250" height="800"></canvas>
+    </div>
+
+    
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-2 left-panel">
+                <div class="flex-container">
+                    {% for image in images %}
+                        {% if loop.index0%2==0 %}
+                            <div class="thumbnail-wrapper" data-image="{{ image }}">
+                                <img class="img-fluid img-thumbnail select-image" style="width: 150px; height: 150px;"src="{{ url_for('static', filename='uploads/' + image) }}" alt="{{ image }}">
+                            </div>
+                                {% endif %}
+                        {% if loop.index0%2==1 %}
+                            <div class="thumbnail-wrapper" data-image="{{ image }}">
+                                <img class="img-fluid img-thumbnail select-image" style="width: 150px; height: 150px;"src="{{ url_for('static', filename='uploads/' + image) }}" alt="{{ image }}">
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+
+            
+
+                </ul>
+            </div>
+        </div>
+    </div>
+    -->
+
+    <div class="offcanvas offcanvas-end" tabindex="-1" data-bs-backdrop="false" id="offcanvasRight" aria-labelledby="offcanvasRightLabel">
+        <div class="offcanvas-header">
+          <h5 class="offcanvas-title" id="offcanvasRightLabel">Offcanvas right</h5>
+          <button type="button" class="btn-close" onclick="toggleSidebar('offcanvasRight')" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body" id="labels-container">
+            
+        </div>
+      </div>
+    
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/4.5.0/fabric.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+    <script>
+        var canvas = new fabric.Canvas('canvas');
+        canvas.renderAll();
+
+        let isDrawing = false;
+        let startX, startY, rect;
+        let currentImage = null;
+        const boundingBoxData = {}; // Store bounding boxes for each image by name
+        let activeBox = null;
+        let labelCounter = 0;
+        let uniqueIdCounter = 0;
+        let availableLabels = [{ name: 'New Label', color: '#000000' }]; // Default label
+        let currentLabel = 'New Label'; // Set the initial label to "New Label"
+
+        document.getElementById('imageUpload').addEventListener('change', function(event) {
+            const files = Array.from(event.target.files);
+            console.log('Files selected:', files);
+            generateThumbnails(files);
+        });
+
+        function generateThumbnails(images) {
+            const leftPanel1 = document.querySelector('.col-6.left-panel:nth-of-type(1) .flex-container');
+            const leftPanel2 = document.querySelector('.col-6.left-panel:nth-of-type(2) .flex-container');
+
+            images.forEach((image, index) => {
+                const thumbnailWrapper = document.createElement('div');
+                thumbnailWrapper.className = 'thumbnail-wrapper';
+                thumbnailWrapper.setAttribute('data-image', image.name);
+
+                const img = document.createElement('img');
+                img.className = 'img-fluid img-thumbnail select-image';
+                img.style.width = '150px';
+                img.style.height = '150px';
+                img.src = URL.createObjectURL(image);
+                img.alt = image.name;
+
+                thumbnailWrapper.appendChild(img);
+
+                if (index % 2 === 0) {
+                    leftPanel1.appendChild(thumbnailWrapper);
+                } else {
+                    leftPanel2.appendChild(thumbnailWrapper);
+                }
+            });
+            document.querySelectorAll('.thumbnail-wrapper').forEach(item => {
+                item.addEventListener('click', function() {
+                    // Deselect previously selected image
+                    document.querySelectorAll('.thumbnail-wrapper.selected').forEach(selected => {
+                        selected.classList.remove('selected');
+                    });
+
+                    // Mark the clicked image as selected
+                    item.classList.add('selected');
+
+                    // Display the selected image
+                    const selectedImage = images.find(image => image.name === item.getAttribute('data-image'));
+                    displayImage(selectedImage);
+                });
+            });
+        }
+
+        // Update canvas size when sidebars are toggled
+        function updateCanvasSize(){
+            const leftSidebar = document.getElementById('offcanvasScrolling');
+            const rightSidebar = document.getElementById('offcanvasRight');
+
+            document.documentElement.style.setProperty('--left-sidebar-width', leftSidebar.classList.contains('show') ? '250px' : '0');
+            document.documentElement.style.setProperty('--right-sidebar-width', rightSidebar.classList.contains('show') ? '250px' : '0');
+
+            canvas.setWidth(document.querySelector('.content-area').clientWidth);
+            canvas.setHeight(document.querySelector('.content-area').clientHeight);
+            canvas.renderAll();
+        }
+
+        document.getElementById('offcanvasScrolling').addEventListener('shown.bs.offcanvas', updateCanvasSize);
+        document.getElementById('offcanvasScrolling').addEventListener('hidden.bs.offcanvas', updateCanvasSize);
+        document.getElementById('offcanvasRight').addEventListener('shown.bs.offcanvas', updateCanvasSize);
+        document.getElementById('offcanvasRight').addEventListener('hidden.bs.offcanvas', updateCanvasSize);
+
+        updateCanvasSize();
+
+        function displayImage(file) {
+            canvas.clear(); // Clear canvas before adding a new image
+            canvas.setBackgroundColor('#D3D3D3');
+            currentImage = file.name;
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                fabric.Image.fromURL(event.target.result, function(img) {
+                    img.scaleToWidth(canvas.width * 0.8);
+                    img.scaleToHeight(canvas.height * 0.8);
+                    img.set({
+                        left: canvas.width / 2,
+                        top: canvas.height / 2,
+                        originX: 'center',
+                        originY: 'center',
+                        selectable: false,
+                        evented: false
+                    });
+                    canvas.add(img);
+                    canvas.sendToBack(img);
+                    canvas.renderAll();
+
+                    // Load bounding boxes for the current image if they exist
+                    if (boundingBoxData[file.name]) {
+                        boundingBoxData[file.name].forEach(boxData => {
+                            const rect = new fabric.Rect({
+                                left: boxData.box.left,
+                                top: boxData.box.top,
+                                width: boxData.box.width,
+                                height: boxData.box.height,
+                                fill: boxData.color,
+                                opacity: boxData.fillOpacity || 0.3,
+                                stroke: 'red',
+                                strokeWidth: 2,
+                                selectable: true,
+                                hasControls: true,
+                                id: boxData.id,
+                            });
+                            rect.label = boxData.label;
+                            rect.color = boxData.color;
+                            canvas.add(rect);
+                        });
+                    }
+
+                    updateLabelsPanel();
+
+                    if (boundingBoxData[file.name]) {
+                        boundingBoxData[file.name].forEach((boxData, index) => {
+                            console.log(`Restoring bounding box ${index}:`, boxData); // Debug log
+                        });
+                    }
+
+                }, { crossOrigin: 'anonymous' });
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Function to save bounding box data
+        function saveBoundingBoxes() {
+            if(!currentImage) return;
+
+            if (currentImage) {
+                const existingBoxes = boundingBoxData[currentImage] || [];
+
+                // Update existing boxes or add new ones
+                const updatedBoxes = canvas.getObjects('rect').map(box => {
+                    const existingBox = existingBoxes.find(
+                        savedBox => savedBox.box.left === box.left && savedBox.box.top === box.top
+                    );
+                    return existingBox
+                        ? { ...existingBox}
+                        : {
+                            box: {
+                                left: box.left,
+                                top: box.top,
+                                width: box.width,
+                                height: box.height
+                            },
+                            label: box.label || 'Write Label',
+                            color: box.color || '#000000',
+                            fillOpacity: box.fillOpacity || 0.3,
+                        };
+                });
+                boundingBoxData[currentImage] = updatedBoxes;
+            }
+            updateLabelsPanel();
+        }
+
+        // Update the label panel UI with rows for each label and color selector
+        function updateLabelsPanel() {
+            const labelsContainer = document.getElementById('labels-container');
+            labelsContainer.innerHTML = ''; // Clear existing labels
+
+            if (!boundingBoxData[currentImage]) return;
+
+            const currentBoxes = boundingBoxData[currentImage];
+            currentBoxes.forEach(({ box, label, color }, index) => {
+                const labelDiv = document.createElement('div');
+                labelDiv.className = 'label-entry';
+
+                const labelDropdown = document.createElement('select');
+                labelDropdown.className = 'form-select';
+                labelDropdown.innerHTML = availableLabels
+                labelDropdown.innerHTML = availableLabels.map(
+                    (availableLabel) =>
+                        `<option value="${availableLabel.name}" ${
+                            availableLabel.name === label ? 'selected' : ''
+                        }>${availableLabel.name}</option>`
+                ).join('');
+                labelDropdown.addEventListener('change', () => {
+                    const newLabel = labelDropdown.value;
+                    currentBoxes[index].label = newLabel; // Update the data
+                    canvas.getObjects('rect')[index].label = newLabel; // Sync with canvas object
+                });
+
+
+                function hexToRGBA(hex, alpha) {
+                    const bigint = parseInt(hex.slice(1), 16);
+                    const r = (bigint >> 16) & 255;
+                    const g = (bigint >> 8) & 255;
+                    const b = bigint & 255;
+
+                    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+                }
+
+                
+
+                // Delete button
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'Delete';
+                deleteButton.addEventListener('click', () => {
+                    canvas.remove(canvas.getObjects('rect')[index]); // Remove the rectangle from the canvas
+                    currentBoxes.splice(index, 1); // Remove from boundingBoxData
+                    updateLabelsPanel(); // Refresh the panel
+                    saveBoundingBoxes(); // Sync changes
+                });
+
+                labelDiv.appendChild(labelDropdown);
+                labelDiv.appendChild(deleteButton);
+                labelsContainer.appendChild(labelDiv);
+                
+
+                // Highlight corresponding bounding box when label is clicked
+                labelDiv.addEventListener('click', () => {
+                    const targetRect = canvas.getObjects('rect')[index];
+                    canvas.setActiveObject(targetRect);
+                    canvas.renderAll();
+                });
+                
+            });
+            
+        }
+
+        document.getElementById('add-label-button').addEventListener('click', function() {
+            const labelName = document.getElementById('label-name-input').value.trim();
+            const labelColor = document.getElementById('label-color-input').value;
+
+            if (!labelName) {
+                alert("Label name cannot be empty.");
+                return;
+            }
+
+            // Check if the label name already exists
+            const existingLabel = availableLabels.find(label => label.name === labelName);
+            if (existingLabel) {
+                alert("Label name already exists. Please choose a different name.");
+                return;
+            }
+
+            // Add label to the available labels list
+            availableLabels.push({
+                name: labelName,
+                color: labelColor
+            });
+
+            updateLabelsDropdown();
+
+            alert(`Label "${labelName}" with color ${labelColor} added successfully.`);
+
+            // Optionally clear inputs after adding
+            document.getElementById('label-name-input').value = '';
+            document.getElementById('label-color-input').value = '#ff0000';
+
+            console.log("Available labels:", availableLabels); // Debugging log
+        });
+
+        function addLabel() {
+            const labelInput = document.getElementById('new-label-input'); // Input field for new label
+            const newLabel = labelInput.value.trim(); // Get and trim user input
+            if (newLabel && !availableLabels.some(label => label.name === newLabel)) {
+                availableLabels.push({ name: newLabel, color: '#ff0000' }); // Add new label if not already present
+                labelInput.value = ''; // Clear input field
+                updateLabelsDropdown(); // Update dropdowns
+                displayAvailableLabels(); // Display the updated labels
+                console.log("Label added:", newLabel); // Debugging log
+                console.log("Available labels:", availableLabels); // Debugging log
+            } else if (availableLabels.some(label => label.name === newLabel)) {
+                alert('Label already exists!');
+            }
+        }
+
+        function updateLabelsDropdown() {
+            const allDropdowns = document.querySelectorAll('.form-select'); // All dropdowns
+            allDropdowns.forEach(dropdown => {
+                const currentLabel = dropdown.value;
+                dropdown.innerHTML = availableLabels
+                    .map(label => `<option value="${label.name}">${label.name}</option>`)
+                    .join('');
+            });
+        }
+
+        function displayAvailableLabels() {
+            const labelsContainer = document.getElementById('labels-container');
+            labelsContainer.innerHTML = ''; // Clear previous labels
+
+            availableLabels.forEach((label, index) => {
+                const labelElement = document.createElement('div');
+                labelElement.textContent = `${index}: ${label.name}`;
+                labelsContainer.appendChild(labelElement);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize the dropdown with the default label
+            updateLabelsDropdown();
+            displayAvailableLabels();
+        });
+
+        // Update label and color of bounding box
+        function updateLabel(rect, newLabel, newColor) {
+            if (!rect) return; // Safety check
+
+            // Update the label and color on the rectangle
+            rect.label = newLabel;
+            rect.color = newColor;
+            rect.set({
+                fill: newColor,
+                opacity: rect.fillOpacity || 0.3, // Update the bounding box's fill color
+            });
+            canvas.renderAll(); // Render changes on the canvas
+
+            // Update the boundingBoxData
+            const currentBoxes = boundingBoxData[currentImage];
+            if (currentBoxes) {
+                const boxIndex = currentBoxes.findIndex(({ box }) => box === rect);
+                if (boxIndex !== -1) {
+                    currentBoxes[boxIndex].label = newLabel;
+                    currentBoxes[boxIndex].color = newColor;
+                }
+            }
+        }
+
+        canvas.on('object:modified', function (event) {
+            const modifiedRect = event.target;
+            if (modifiedRect.type === 'rect' && currentImage) {
+                const currentBoxes = boundingBoxData[currentImage] || [];
+                const boxIndex = currentBoxes.findIndex(boxData => boxData.id === modifiedRect.id);
+
+                if (boxIndex !== -1) {
+                    currentBoxes[boxIndex].box.left = modifiedRect.left;
+                    currentBoxes[boxIndex].box.top = modifiedRect.top;
+                    currentBoxes[boxIndex].box.width = modifiedRect.width * modifiedRect.scaleX;
+                    currentBoxes[boxIndex].box.height = modifiedRect.height * modifiedRect.scaleY;
+                }
+
+                saveBoundingBoxes();
+            }
+        });
+
+
+        // Prevent drawing inside existing bounding boxes
+        canvas.on('mouse:down', function(options) {
+            if (options.target) {
+                return; // Ignore if clicking on existing objects (bounding boxes)
+            }
+
+            isDrawing = true;
+            const pointer = canvas.getPointer(options.e);
+
+            startX = pointer.x;
+            startY = pointer.y;
+
+            // Create a new rectangle at the start point
+            rect = new fabric.Rect({
+                left: startX,
+                top: startY,
+                fill: 'rgba(255, 255, 255, 0.3)', // Semi-transparent fill for visual feedback
+                stroke: 'red',
+                strokeWidth: 2,
+                selectable: false,
+                hasControls: false,
+                evented: false,
+                label: currentLabel,
+                
+            });
+            canvas.add(rect);
+        });
+
+        // Adjust rectangle dimensions during mouse move
+        canvas.on('mouse:move', function(options) {
+            if (!isDrawing) return;
+
+            const pointer = canvas.getPointer(options.e);
+            rect.set({
+                width: Math.abs(pointer.x - startX),
+                height: Math.abs(pointer.y - startY),
+                left: Math.min(pointer.x, startX),
+                top: Math.min(pointer.y, startY)
+            });
+            canvas.renderAll();
+        });
+
+        // Finalize the rectangle on mouse up
+        canvas.on('mouse:up', function() {
+            if (!isDrawing) return;
+
+            isDrawing = false;
+
+            // Finalize rectangle properties
+            rect.set({
+                selectable: true,
+                evented: true,
+                hasControls: true,
+                label: 'Write Label',
+                fill: 'rgba(255,255,255,0.3)',
+                color: '#000000',
+                id: `box-${uniqueIdCounter++}`
+            });
+
+            if (!boundingBoxData[currentImage]) {
+                boundingBoxData[currentImage] = [];
+            }
+
+            boundingBoxData[currentImage].push({
+                id: rect.id,
+                box: {
+                    left: rect.left,
+                    top: rect.top,
+                    width: rect.width,
+                    height: rect.height
+                },
+                label: rect.label,
+                color: rect.color,
+            });
+
+            updateLabelsPanel();
+            saveBoundingBoxes();
+            canvas.renderAll();
+        });
+        
+        // Thumbnail click handler for selecting images
+        document.querySelectorAll('.thumbnail-wrapper').forEach(item => {
+            item.addEventListener('click', function() {
+                // Deselect previously selected image
+                document.querySelectorAll('.thumbnail-wrapper.selected').forEach(selected => {
+                    selected.classList.remove('selected');
+                });
+
+                // Mark the clicked image as selected
+                item.classList.add('selected');
+
+                // Display the selected image
+                const selectedImage = item.getAttribute('data-image');
+                displayImage(selectedImage);
+            });
+        });
+
+        document.getElementById('export-yolo').addEventListener('click', exportYOLOLabels);
+
+        function exportYOLOLabels() {
+            if (!Object.keys(boundingBoxData).length) {
+                alert("No labels to export.");
+                return;
+            }
+            const zip = new JSZip();
+
+            Object.keys(boundingBoxData).forEach(imageName => {
+                const boxes = boundingBoxData[imageName];
+                const yoloData = [];
+
+                boxes.forEach(({ box, label }) => {
+                    const classId = availableLabels.findIndex(l => l.name === label); // Get the index of the label from availableLabels
+                    console.log(`Class ID for label "${label}": ${classId}`); // Print classId to the console
+                    if (classId === -1) {
+                        console.error(`Label "${label}" not found in availableLabels.`);
+                        return; // Skip this box if the label is not found
+                    }
+                    const xCenter = (box.left + box.width / 2) / canvas.width;
+                    const yCenter = (box.top + box.height / 2) / canvas.height;
+                    const width = box.width / canvas.width;
+                    const height = box.height / canvas.height;
+
+                    // Construct YOLO line
+                    yoloData.push(`${classId-1} ${xCenter.toFixed(6)} ${yCenter.toFixed(6)} ${width.toFixed(6)} ${height.toFixed(6)}`);
+                });
+
+                if (yoloData.length > 0) {
+                    // Add the YOLO data to the ZIP file
+                    zip.file(`${imageName.split('.')[0]}.txt`, yoloData.join("\n"));
+                }
+            });
+
+            // Generate the ZIP file and trigger the download
+            zip.generateAsync({ type: "blob" }).then(function(content) {
+                const a = document.createElement("a");
+                a.href = URL.createObjectURL(content);
+                a.download = "labels.zip";
+                document.body.appendChild(a); // Append the link to the body
+                a.click();
+                document.body.removeChild(a); // Remove the link after clicking
+            });
+
+            alert("Labels exported in YOLOv4 format.");
+        }
+        
+
+
+
+    </script>
+</body>
+    
+</html>
