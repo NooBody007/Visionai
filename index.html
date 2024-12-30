@@ -97,7 +97,10 @@
                 <li class="nav-item">
                 <button class="btn btn-primary"  type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasScrolling" aria-controls="offcanvasScrolling">Images</button>
                 </li>
-                <input type="file" id="imageUpload" multiple accept="image/*">
+                <input type="file" id="imageUpload" multiple accept="image/*" style="display:none;">
+                <button class="custom-button" onclick="document.getElementById('imageUpload').click();">
+                    Upload Images
+                </button>
             </ul>
            <div id="label-inputs">
                 <input type="text" id="label-name-input" placeholder="Enter label name">
